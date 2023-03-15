@@ -11,7 +11,7 @@ const App = () => {
   const [userInput, setUserInput] = useState("");
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [streamText, setStreamText] = useState('');
+  const [apiResponse, setApiResponse] = useState('');
   const [messages, setMessages] = useState([
     {
       "message": "Hi there! How can I help?",
@@ -39,6 +39,7 @@ const App = () => {
     setUserInput("");
   }
 
+
    // Handle form submission
    const handleSubmit = async(e) => {
     e.preventDefault();
@@ -60,39 +61,41 @@ const App = () => {
       socket.send(message);
     });
     
+    // Start sreaming the messagws
+    let concatenatedMessage = "";
     socket.addEventListener('message', (event) => {
       console.log(`Received message: ${event.data}`);
-      // Update the state with the new streaming text
-      setMessages(prevMessages => prevMessages + event.data.message);
-      
-      // Handle the response from the server here
+      const data = JSON.parse(event.data);
+    
+      if (data.type === 'start') {
+        // Create a new "apiMessage" with an empty message when the response starts
+        setMessages((prevMessages) => [...prevMessages, { "message": '', "type": "apiMessage" }]);
+      } else if (data.type === 'stream') {
+        concatenatedMessage += data.message;
+        // Update the displayed message when a punctuation mark, newline character, or whitespace is received.
+        if (data.message.match(/[.,!?;\n\s]/)) {
+          setMessages((prevMessages) => {
+            const newMessages = [...prevMessages];
+            if (newMessages[newMessages.length - 1].type === 'apiMessage') {
+              newMessages[newMessages.length - 1].message = concatenatedMessage;
+            }
+            return newMessages;
+          });
+        }
+      } else if (data.type === 'end') {
+        // Reset concatenatedMessage when the stream ends
+        concatenatedMessage = "";
+      } else if (data.type === 'error') {
+        handleError();
+      }
     });
     
-    socket.addEventListener('error', (event) => {
-      console.error('WebSocket error', event);
-      
-      // Handle the error here
-    });
     
-    socket.addEventListener('close', (event) => {
-      console.log('WebSocket disconnected', event);
-      
-      // Handle the close event here
-    });
-
+    
     // Reset user input
     setUserInput("");
-    const data = await socket.json();
+};
 
-    if (data.result.error === "Unauthorized") {
-      handleError();
-      return;
-    }
-
-    setMessages((prevMessages) => [...prevMessages, { "message": data.result.success, "type": "apiMessage" }]);
-    setLoading(false);
-    
-  };
   // Prevent blank submissions and allow for multiline input
   const handleEnter = (e) => {
     if (e.key === "Enter" && userInput) {
