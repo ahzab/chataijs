@@ -85,6 +85,7 @@ const App = () => {
       } else if (data.type === 'end') {
         // Reset concatenatedMessage when the stream ends
         concatenatedMessage = "";
+        setLoading(false);
       } else if (data.type === 'error') {
         handleError();
       }
