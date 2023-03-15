@@ -56,21 +56,21 @@ const App = () => {
 
     socket.addEventListener('open', (event) => {
       console.log('WebSocket connected');
-      
+
       const message = JSON.stringify({ question: userInput, history: history });
       socket.send(message);
     });
-    
+
     // Start sreaming the messagws
     let concatenatedMessage = "";
     socket.addEventListener('message', (event) => {
       console.log(`Received message: ${event.data}`);
       const data = JSON.parse(event.data);
-    
+
       if (data.type === 'start') {
         // Create a new "apiMessage" with an empty message when the response starts
         setMessages((prevMessages) => [...prevMessages, { "message": '', "type": "apiMessage" }]);
-      } else if (data.type === 'stream') {
+      } else if (data.type === 'stream' && data.sender === 'bot') {
         concatenatedMessage += data.message;
         // Update the displayed message when a punctuation mark, newline character, or whitespace is received.
         if (data.message.match(/[.,!?;\n\s]/)) {
@@ -89,9 +89,9 @@ const App = () => {
         handleError();
       }
     });
-    
-    
-    
+
+
+
     // Reset user input
     setUserInput("");
 };
@@ -144,30 +144,30 @@ const App = () => {
         </div>
             </div>
            <div className={styles.center}>
-            
+
             <div className = {styles.cloudform}>
            <form onSubmit = {handleSubmit}>
-          <textarea 
+          <textarea
           disabled = {loading}
           onKeyDown={handleEnter}
           ref = {textAreaRef}
           autoFocus = {false}
           rows = {1}
           maxLength = {512}
-          type="text" 
-          id="userInput" 
-          name="userInput" 
-          placeholder = {loading? "Waiting for response..." : "Type your question..."}  
-          value = {userInput} 
-          onChange = {e => setUserInput(e.target.value)} 
+          type="text"
+          id="userInput"
+          name="userInput"
+          placeholder = {loading? "Waiting for response..." : "Type your question..."}
+          value = {userInput}
+          onChange = {e => setUserInput(e.target.value)}
           className = {styles.textarea}
           />
-            <button 
-            type = "submit" 
+            <button
+            type = "submit"
             disabled = {loading}
             className = {styles.generatebutton}
             >
-            {loading ? <div className = {styles.loadingwheel}><CircularProgress color="inherit" size = {20}/> </div> : 
+            {loading ? <div className = {styles.loadingwheel}><CircularProgress color="inherit" size = {20}/> </div> :
             // Send icon SVG in input field
             <svg viewBox='0 0 20 20' className={styles.svgicon} xmlns='http://www.w3.org/2000/svg'>
             <path d='M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z'></path>
